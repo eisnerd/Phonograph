@@ -133,29 +133,23 @@ public final class FileUtil {
             String fileExtension = filename.substring(dotPos + 1).toLowerCase();
             String fileType = mimeTypeMap.getMimeTypeFromExtension(fileExtension);
             if (fileType == null) {
-                return false;
+                if (fileExtension.equals("opus"))
+                    fileType = "audio/ogg";
+                else
+                    return false;
             }
-            // check the 'type/subtype' pattern
-            if (fileType.equals(mimeType)) {
-                return true;
-            }
-            // check the 'type/*' pattern
-            int mimeTypeDelimiter = mimeType.lastIndexOf('/');
-            if (mimeTypeDelimiter == -1) {
-                return false;
-            }
-            String mimeTypeMainType = mimeType.substring(0, mimeTypeDelimiter);
-            String mimeTypeSubtype = mimeType.substring(mimeTypeDelimiter + 1);
-            if (!mimeTypeSubtype.equals("*")) {
-                return false;
-            }
-            int fileTypeDelimiter = fileType.lastIndexOf('/');
-            if (fileTypeDelimiter == -1) {
-                return false;
-            }
-            String fileTypeMainType = fileType.substring(0, fileTypeDelimiter);
-            if (fileTypeMainType.equals(mimeTypeMainType)) {
-                return true;
+            for (String pattern : mimeType.split(",")) {
+                int mimeTypeDelimiter, fileTypeDelimiter;
+                if (
+                  // check the 'type/subtype' pattern
+                  fileType.equals(pattern)
+                  // check the 'type/*' pattern
+                  || (mimeTypeDelimiter = pattern.lastIndexOf('/')) != -1
+                  && pattern.substring(mimeTypeDelimiter + 1).equals("*")
+                  && (fileTypeDelimiter = fileType.lastIndexOf('/')) != -1
+                  && fileType.substring(0, fileTypeDelimiter).equals(pattern.substring(0, mimeTypeDelimiter))
+                )
+                    return true;
             }
         }
         return false;
